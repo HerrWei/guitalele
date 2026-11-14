@@ -434,10 +434,24 @@ async function startMic(){
     $("tMsg").textContent = "Dieser Browser bietet hier kein Mikrofon an. Öffne die Seite direkt in Safari oder Chrome.";
     return;
   }
+  $("tMsg").textContent = "Frage das Mikrofon an …";
+  let err = null;
   try{
     micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
-  }catch(e){
-    $("tMsg").textContent = "Kein Zugriff aufs Mikrofon. In der Claude-Vorschau ist das Mikrofon gesperrt. Öffne die Seite direkt in Safari und erlaube das Mikrofon.";
+  }catch(e){ err = e; }
+  if(!micStream){
+    try{ micStream = await navigator.mediaDevices.getUserMedia({audio:true}); err = null; }catch(e){ err = e; }
+  }
+  if(!micStream){
+    const name = (err && err.name) || "Fehler";
+    const tips = {
+      NotAllowedError: "Das Mikrofon wurde blockiert. In Safari: links in der Adressleiste auf das Seiten-Symbol (oder „aA“) tippen → Website-Einstellungen → Mikrofon → Erlauben. Außerdem: iPhone-Einstellungen → Apps → Safari → Mikrofon → Fragen oder Erlauben. Dann die Seite neu laden.",
+      NotFoundError: "Es wurde kein Mikrofon gefunden.",
+      NotReadableError: "Das Mikrofon wird gerade von einer anderen App benutzt (z. B. Telefonat oder Sprachmemo). Beende sie und versuch es erneut.",
+      SecurityError: "Die Seite darf hier kein Mikrofon benutzen. In der Claude-App ist es gesperrt; öffne die Seite direkt in Safari.",
+      AbortError: "Der Mikrofonstart wurde abgebrochen. Versuch es erneut."
+    };
+    $("tMsg").textContent = (tips[name] || "Kein Zugriff aufs Mikrofon.") + " (" + name + (err && err.message ? ": " + err.message : "") + ")";
     showIdle("Mikrofon nicht verfügbar");
     return;
   }
