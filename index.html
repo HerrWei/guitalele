@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+<title>Guitalele Stimmer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Karla:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: ein Griffbrett quer über die Seite, jede Saite ist ein Knopf; darunter Einstellungen und Hintergrund. */
+:root{
+  --bg:#f3ece2; --panel:#fffaf3; --fg:#2b2119; --muted:#7a6656; --line:#d9c9b6;
+  --wood:#5a3a22; --wood2:#7a4f2e; --fret:#c9b9a2; --string:#e7d6b8; --accent:#c4512b; --accent-soft:#f3d6c8; --ok:#2f8a4e; --ok-soft:#d4ecd9;
+  --display:"Fraunces",Georgia,serif; --body:"Karla",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1b1511; --panel:#251d17; --fg:#f1e6d8; --muted:#b09a86; --line:#3e3128;
+  --wood:#3a2415; --wood2:#563620; --fret:#8a7a66; --string:#e9dcc4; --accent:#ec7a50; --accent-soft:#4a2a1d; --ok:#5cc77f; --ok-soft:#1f3a27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1b1511; --panel:#251d17; --fg:#f1e6d8; --muted:#b09a86; --line:#3e3128;
+  --wood:#3a2415; --wood2:#563620; --fret:#8a7a66; --string:#e9dcc4; --accent:#ec7a50; --accent-soft:#4a2a1d; --ok:#5cc77f; --ok-soft:#1f3a27; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,3rem);line-height:1.05;margin:0;text-wrap:balance}
+header p{margin:.5rem 0 0;color:var(--muted);max-width:60ch}
+.tuning{font-family:var(--mono);letter-spacing:.08em;color:var(--accent)}
+
+/* Griffbrett */
+.neck{position:relative;border-radius:14px;padding:14px 0;
+  background:linear-gradient(90deg,var(--wood) 0,var(--wood2) 50%,var(--wood) 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.neck::before{content:"";position:absolute;inset:0;border-radius:14px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 2px),var(--fret) calc(25% - 2px) 25%);opacity:.55}
+.string{position:relative;display:grid;grid-template-columns:4.2rem 1fr auto;align-items:center;gap:12px;
+  width:100%;min-height:58px;border:0;background:transparent;color:#f6ead6;cursor:pointer;font:inherit;
+  padding:0 16px;text-align:left}
+.string .line{height:var(--w);background:var(--string);border-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.45);transition:transform .08s}
+.string .num{font-family:var(--mono);font-size:.78rem;opacity:.75}
+.string .note{font-family:var(--display);font-weight:800;font-size:1.7rem;line-height:1}
+.string .note sub{font-family:var(--mono);font-size:.7rem;font-weight:500;opacity:.8;margin-left:2px}
+.string .hz{font-family:var(--mono);font-size:.82rem;font-variant-numeric:tabular-nums;opacity:.85;min-width:6.5ch;text-align:right}
+.string:hover .line{background:#fff3dc}
+.string:focus-visible{outline:2px solid var(--accent);outline-offset:-4px;border-radius:10px}
+.string.on .line{background:var(--accent);animation:buzz .09s linear infinite}
+.string.on .note{color:#ffd2bd}
+@keyframes buzz{0%,100%{transform:translateY(0)}50%{transform:translateY(1.5px)}}
+@media (prefers-reduced-motion:reduce){.string.on .line{animation:none}}
+
+/* Stimmgerät */
+.tuner{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.tuner-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.target{font-family:var(--display);font-weight:800;font-size:2.6rem;line-height:1}
+.target sub{font-family:var(--mono);font-size:.9rem;font-weight:500;color:var(--muted)}
+.meter{width:100%;max-width:420px;align-self:center;display:block}
+.meter .arc{fill:none;stroke:var(--line);stroke-width:10;stroke-linecap:round}
+.meter .okzone{fill:none;stroke:var(--ok);stroke-width:10}
+.meter .ticks line{stroke:var(--muted);stroke-width:1.5}
+.meter .tl{fill:var(--muted);font-family:var(--mono);font-size:11px}
+.meter .needle{stroke:var(--fg);stroke-width:3;stroke-linecap:round}
+.meter .hub{fill:var(--fg)}
+#needle{transition:transform .12s linear}
+.tuner[data-state="ok"] .needle,.tuner[data-state="ok"] .hub{stroke:var(--ok);fill:var(--ok)}
+.advice{text-align:center;font-weight:700;font-size:1.25rem;padding:10px 12px;border-radius:10px;background:var(--bg);text-wrap:balance}
+.advice[data-state="up"],.advice[data-state="down"]{background:var(--accent-soft);color:var(--fg)}
+.advice[data-state="ok"]{background:var(--ok-soft);color:var(--fg)}
+.readout{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.readout div{min-width:0;text-align:center}
+.readout dt{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.readout dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:1rem}
+.btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.btn.primary[aria-pressed]{color:#fff}
+
+/* Steuerung */
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.ctl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--fg);font:inherit;font-weight:600;padding:9px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.seg button:focus-visible,.btn:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ref{display:flex;align-items:center;gap:10px}
+.ref input{flex:1;accent-color:var(--accent);min-width:0}
+.ref output{font-family:var(--mono);font-variant-numeric:tabular-nums;min-width:6ch;text-align:right}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-weight:600;
+  padding:9px 14px;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+kbd{font-family:var(--mono);font-size:.8em;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px}
+
+/* Vergleichstabelle */
+section h2{font-family:var(--display);font-weight:600;font-size:1.35rem;margin:0 0 10px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+td.m{font-family:var(--mono);font-size:.9rem}
+td.hl{color:var(--accent);font-weight:700}
+.note-box{background:var(--accent-soft);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:.92rem;max-width:65ch}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Guitalele Stimmer</h1>
+    <p>Stimmung wie eine Gitarre mit Kapodaster im 5.&nbsp;Bund: <span class="tuning">A · D · G · C · E · A</span>. Tippe eine Saite an, hör den Referenzton und dreh deine Saite, bis keine Schwebung mehr zu hören ist.</p>
+  </header>
+
+  <div class="tuner" id="tuner">
+    <div class="tuner-top">
+      <div>
+        <span class="label">Stimmgerät</span>
+        <div class="target" id="tTarget">–</div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="autoBtn" aria-pressed="true">Saite automatisch</button>
+        <button class="btn primary" id="micBtn">Mikrofon starten</button>
+      </div>
+    </div>
+    <svg class="meter" viewBox="0 0 300 160" aria-hidden="true">
+      <path class="arc" d="M 30 140 A 120 120 0 0 1 270 140"/>
+      <path class="okzone" id="okzone"/>
+      <g class="ticks" id="ticks"></g>
+      <text x="30" y="157" class="tl" text-anchor="middle">−50</text>
+      <text x="150" y="157" class="tl" text-anchor="middle">0</text>
+      <text x="270" y="157" class="tl" text-anchor="middle">+50</text>
+      <g id="needle" style="transform-origin:150px 140px"><line x1="150" y1="140" x2="150" y2="34" class="needle"/></g>
+      <circle cx="150" cy="140" r="7" class="hub"/>
+    </svg>
+    <div class="advice" id="tAdvice" data-state="idle">Starte das Mikrofon und zupf eine Saite.</div>
+    <dl class="readout">
+      <div><dt>Ist</dt><dd id="tIst">– Hz</dd></div>
+      <div><dt>Soll</dt><dd id="tSoll">– Hz</dd></div>
+      <div><dt>Abweichung</dt><dd id="tCents">– Cent</dd></div>
+    </dl>
+    <p class="hint" id="tMsg">Tippe eine Saite unten an, um sie fest als Ziel zu wählen. Der Referenzton wird dabei kurz abgespielt.</p>
+  </div>
+
+  <div class="neck" id="neck" role="group" aria-label="Saiten"></div>
+
+  <div class="controls">
+    <div class="ctl">
+      <span class="label">Klang</span>
+      <div class="seg" role="group" aria-label="Klang">
+        <button id="modePluck" aria-pressed="true">Gezupft</button>
+        <button id="modeDrone" aria-pressed="false">Dauerton</button>
+      </div>
+      <p class="hint">Dauerton klingt, bis du die Saite erneut antippst.</p>
+    </div>
+    <div class="ctl">
+      <label class="label" for="ref">Kammerton a′</label>
+      <div class="ref"><input type="range" id="ref" min="430" max="450" step="1" value="440"><output id="refOut">440 Hz</output></div>
+      <p class="hint">Standard ist 440&nbsp;Hz.</p>
+    </div>
+    <div class="ctl">
+      <span class="label">Abspielen</span>
+      <div class="btns">
+        <button class="btn primary" id="all">Alle nacheinander</button>
+        <button class="btn" id="stop">Stopp</button>
+      </div>
+      <p class="hint">Tasten <kbd>1</kbd>–<kbd>6</kbd> spielen die Saiten. Am iPhone: Lautstärke hochdrehen.</p>
+    </div>
+  </div>
+
+  <section>
+    <h2>Gitarre und Guitalele im Vergleich</h2>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>Saite</th><th>Gitarre</th><th>+ 5 Halbtöne</th><th>Guitalele</th><th>Frequenz</th></tr></thead>
+        <tbody id="cmp"></tbody>
+      </table>
+    </div>
+    <p class="note-box">Die Guitalele klingt eine Quarte höher als die Gitarre. Griffe und Tabs funktionieren wie auf der Gitarre, nur klingt ein „E-Dur“-Griff auf der Guitalele als A-Dur. Die drei tiefen Saiten (A, D, G) sind meist umsponnen, die drei hohen (C, E, A) sind Nylon.</p>
+  </section>
+</div>
+
+<script>
+// Saite 1 = höchste. Halbtonabstand zu a′ (A4).
+const STRINGS = [
+  {n:6, note:"A", oct:2, semis:-24, guitar:"E2", w:4},
+  {n:5, note:"D", oct:3, semis:-19, guitar:"A2", w:3.4},
+  {n:4, note:"G", oct:3, semis:-14, guitar:"D3", w:2.8},
+  {n:3, note:"C", oct:4, semis:-9,  guitar:"G3", w:2.4},
+  {n:2, note:"E", oct:4, semis:-5,  guitar:"H3", w:1.9},
+  {n:1, note:"A", oct:4, semis:0,   guitar:"E4", w:1.5},
+];
+let ref = 440, mode = "pluck", ctx = null, master = null;
+const freq = s => ref * Math.pow(2, s.semis/12);
+const fmt = f => f.toFixed(2).replace(".", ",") + " Hz";
+
+const neck = document.getElementById("neck");
+// Hohe Saite oben, wie beim Blick auf das Griffbrett.
+[...STRINGS].reverse().forEach(s=>{
+  const b = document.createElement("button");
+  b.className = "string"; b.id = "s"+s.n; b.style.setProperty("--w", s.w+"px");
+  b.innerHTML = `<span><span class="num">${s.n}. Saite</span><br><span class="note">${s.note}<sub>${s.oct}</sub></span></span><span class="line"></span><span class="hz"></span>`;
+  b.setAttribute("aria-label", `${s.n}. Saite, ${s.note}${s.oct}`);
+  b.addEventListener("click", ()=>{ if(micOn) lockTarget(s); play(s); });
+  neck.appendChild(b);
+});
+const cmp = document.getElementById("cmp");
+function render(){
+  STRINGS.forEach(s=>{ document.querySelector(`#s${s.n} .hz`).textContent = fmt(freq(s)); });
+  cmp.innerHTML = [...STRINGS].reverse().map(s=>`<tr><td>${s.n}</td><td class="m">${s.guitar}</td><td>→</td><td class="m hl">${s.note}${s.oct}</td><td class="m">${fmt(freq(s))}</td></tr>`).join("");
+  document.getElementById("refOut").textContent = ref + " Hz";
+}
+render();
+
+// iPhone: Web Audio bleibt stumm, solange der Stummschalter aktiv ist.
+// Eine stille, laufende <audio>-Wiedergabe schaltet iOS auf "Wiedergabe" um.
+let unlockEl = null;
+function silentWav(){
+  const sr = 8000, n = sr/2, b = new ArrayBuffer(44+n*2), v = new DataView(b);
+  const w = (o,s)=>{for(let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i));};
+  w(0,"RIFF"); v.setUint32(4,36+n*2,true); w(8,"WAVEfmt "); v.setUint32(16,16,true);
+  v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,sr,true); v.setUint32(28,sr*2,true);
+  v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,"data"); v.setUint32(40,n*2,true);
+  let s = ""; const u = new Uint8Array(b); for(let i=0;i<u.length;i++) s += String.fromCharCode(u[i]);
+  return "data:audio/wav;base64," + btoa(s);
+}
+function unlockIOS(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
+  if(unlockEl) return;
+  try{
+    unlockEl = document.createElement("audio");
+    unlockEl.setAttribute("playsinline",""); unlockEl.loop = true; unlockEl.src = silentWav();
+    const p = unlockEl.play(); if(p && p.catch) p.catch(()=>{});
+  }catch(e){}
+}
+
+function audio(){
+  unlockIOS();
+  if(!ctx){
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = .8;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp).connect(ctx.destination);
+  }
+  if(ctx.state !== "running") ctx.resume();
+  // kurzer stiller Puffer direkt in der Geste, weckt Safari zuverlässig auf
+  try{ const b = ctx.createBufferSource(); b.buffer = ctx.createBuffer(1,1,22050); b.connect(ctx.destination); b.start(0); }catch(e){}
+  return ctx;
+}
+
+// Karplus-Strong-Zupfton. Die Periode ist ganzzahlig, daher korrigiert playbackRate die Tonhöhe exakt.
+const pluckCache = new Map();
+function pluckBuffer(f){
+  const sr = ctx.sampleRate, P = Math.max(2, Math.round(sr/f - .5));
+  if(pluckCache.has(P)) return {buf:pluckCache.get(P), f0: sr/(P+.5)};
+  const len = Math.floor(sr*4), buf = ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+  const decay = f < 200 ? .9965 : f < 300 ? .9955 : .994;
+  for(let i=0;i<P;i++) d[i] = (Math.random()*2-1) * .5;
+  // weicher Anschlag: Rauschen einmal glätten
+  for(let i=1;i<P;i++) d[i] = (d[i]+d[i-1])*.5;
+  for(let i=P;i<len;i++) d[i] = decay * .5 * (d[i-P] + (i-P-1 >= 0 ? d[i-P-1] : 0));
+  pluckCache.set(P, buf);
+  return {buf, f0: sr/(P+.5)};
+}
+
+const active = new Map(); // n -> {stop()}
+function stopString(n){
+  const a = active.get(n); if(!a) return;
+  a.stop(); active.delete(n);
+  document.getElementById("s"+n).classList.remove("on");
+}
+function stopAll(){ [...active.keys()].forEach(stopString); seqToken++; }
+
+function play(s){
+  audio();
+  if(mode === "drone" && active.has(s.n)){ stopString(s.n); return; }
+  stopAll();
+  const f = freq(s), t = ctx.currentTime, el = document.getElementById("s"+s.n);
+  const g = ctx.createGain(); g.connect(master);
+  let stopFn, timer;
+  if(mode === "pluck"){
+    const {buf, f0} = pluckBuffer(f);
+    const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = f/f0;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(8000, f*14);
+    g.gain.value = 1.1;
+    src.connect(lp).connect(g); src.start(t);
+    timer = setTimeout(()=>stopString(s.n), 2600);
+    stopFn = ()=>{ clearTimeout(timer); const n = ctx.currentTime; g.gain.setTargetAtTime(0, n, .03); setTimeout(()=>{try{src.stop()}catch(e){} g.disconnect()}, 300); };
+  } else {
+    // Dauerton mit gitarrenähnlichen Obertönen
+    const real = new Float32Array([0,1,.55,.32,.2,.12,.08,.05,.03]);
+    const wave = ctx.createPeriodicWave(real, new Float32Array(real.length));
+    const o = ctx.createOscillator(); o.setPeriodicWave(wave); o.frequency.value = f;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.32, t+.04);
+    o.connect(g); o.start(t);
+    stopFn = ()=>{ const n = ctx.currentTime; g.gain.cancelScheduledValues(n); g.gain.setTargetAtTime(0, n, .05); setTimeout(()=>{try{o.stop()}catch(e){} g.disconnect()}, 400); };
+  }
+  active.set(s.n, {stop:stopFn});
+  el.classList.add("on");
+}
+
+let seqToken = 0;
+async function playAll(){
+  stopAll(); const my = ++seqToken;
+  const prev = mode; if(mode === "drone") setMode("pluck");
+  for(const s of STRINGS){
+    if(my !== seqToken) break;
+    play(s); seqToken = my; // play() ruft stopAll() auf, Token wiederherstellen
+    await new Promise(r=>setTimeout(r, 1100));
+  }
+  if(prev === "drone") setMode("drone");
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById("modePluck").setAttribute("aria-pressed", m==="pluck");
+  document.getElementById("modeDrone").setAttribute("aria-pressed", m==="drone");
+}
+document.getElementById("modePluck").onclick = ()=>{ stopAll(); setMode("pluck"); };
+document.getElementById("modeDrone").onclick = ()=>{ stopAll(); setMode("drone"); };
+document.getElementById("all").onclick = playAll;
+document.getElementById("stop").onclick = stopAll;
+document.getElementById("ref").addEventListener("input", e=>{
+  ref = +e.target.value; render();
+  // laufenden Dauerton mitziehen: neu starten
+  if(mode === "drone" && active.size){ const n = [...active.keys()][0]; stopAll(); play(STRINGS.find(s=>s.n===n)); }
+});
+document.addEventListener("keydown", e=>{
+  if(e.target.matches("input")) return;
+  const s = STRINGS.find(s=>String(s.n) === e.key);
+  if(s){ e.preventDefault(); play(s); }
+  if(e.key === "Escape") stopAll();
+});
+
+// ---------- Stimmgerät (Mikrofon) ----------
+let micOn = false, analyser = null, micStream = null, tbuf = null, locked = null, lastTick = 0;
+let smooth = null, history = [], silentFrames = 0, needleCents = 0;
+const $ = id => document.getElementById(id);
+const tuner = $("tuner");
+
+// Skala zeichnen: -50..+50 Cent auf 180°
+(function drawMeter(){
+  const g = $("ticks"), cx = 150, cy = 140, r = 120;
+  const pt = (c, rr) => { const a = Math.PI * (1 - (c+50)/100); return [cx + rr*Math.cos(a), cy - rr*Math.sin(a)]; };
+  let h = "";
+  for(let c=-50;c<=50;c+=10){ const [x1,y1]=pt(c,r-14), [x2,y2]=pt(c, c%50===0 ? r-30 : r-22); h += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`; }
+  g.innerHTML = h;
+  const [ax,ay] = pt(-5,r), [bx,by] = pt(5,r);
+  $("okzone").setAttribute("d", `M ${ax} ${ay} A ${r} ${r} 0 0 1 ${bx} ${by}`);
+})();
+
+function noteHTML(s){ return `${s.note}<sub>${s.oct}</sub>`; }
+function lockTarget(s){ locked = s; $("autoBtn").setAttribute("aria-pressed","false"); $("tTarget").innerHTML = noteHTML(s); history = []; }
+$("autoBtn").onclick = ()=>{ locked = null; $("autoBtn").setAttribute("aria-pressed","true"); history = []; };
+
+// McLeod-Tonhöhenerkennung (NSDF), nur Verzögerungen für 70–1000 Hz
+function detectPitch(x, sr){
+  let rms = 0; for(let i=0;i<x.length;i++) rms += x[i]*x[i];
+  rms = Math.sqrt(rms/x.length); if(rms < 0.008) return -1;
+  const minLag = Math.floor(sr/1000), maxLag = Math.ceil(sr/70), W = x.length - maxLag;
+  const n = new Float32Array(maxLag+2);
+  for(let t=minLag;t<=maxLag+1;t++){
+    let ac=0, e=0;
+    for(let j=0;j<W;j++){ const a=x[j], b=x[j+t]; ac += a*b; e += a*a + b*b; }
+    n[t] = e > 0 ? 2*ac/e : 0;
+  }
+  // nach dem ersten Abfall unter 0 den ersten Gipfel nahe am Maximum nehmen
+  let t = minLag; while(t < maxLag && n[t] > 0) t++;
+  let max = 0; for(let i=t;i<=maxLag;i++) if(n[i] > max) max = n[i];
+  if(max < 0.6) return -1;
+  for(let i=t+1;i<=maxLag;i++){
+    if(n[i] >= 0.9*max && n[i] >= n[i-1] && n[i] >= n[i+1]){
+      const a=n[i-1], b=n[i], c=n[i+1], d = (a - 2*b + c);
+      const shift = d !== 0 ? 0.5*(a - c)/d : 0;
+      return sr/(i+shift);
+    }
+  }
+  return -1;
+}
+
+const cents = (f, ref) => 1200*Math.log2(f/ref);
+function nearestString(f){
+  let best = STRINGS[0], bd = Infinity;
+  for(const s of STRINGS){ const d = Math.abs(cents(f, freq(s))); if(d < bd){ bd = d; best = s; } }
+  return best;
+}
+
+function showIdle(msg){
+  tuner.dataset.state = "idle";
+  $("tAdvice").dataset.state = "idle"; $("tAdvice").textContent = msg;
+  $("tIst").textContent = "– Hz"; $("tCents").textContent = "– Cent";
+}
+
+function tick(ts){
+  if(!micOn) return;
+  requestAnimationFrame(tick);
+  if(ts - lastTick < 45) return; lastTick = ts;
+  // eigenen Referenzton nicht messen
+  if(active.size){ showIdle("Referenzton läuft …"); return; }
+  analyser.getFloatTimeDomainData(tbuf);
+  const f = detectPitch(tbuf, ctx.sampleRate);
+  if(f < 0){
+    if(++silentFrames > 12){ smooth = null; history = []; showIdle("Zupf eine Saite."); setNeedle(0); }
+    return;
+  }
+  silentFrames = 0;
+  history.push(f); if(history.length > 5) history.shift();
+  const med = [...history].sort((a,b)=>a-b)[history.length>>1];
+  smooth = smooth && Math.abs(cents(med, smooth)) < 50 ? smooth*0.6 + med*0.4 : med;
+
+  const s = locked || nearestString(smooth);
+  const soll = freq(s), c = cents(smooth, soll);
+  $("tTarget").innerHTML = noteHTML(s);
+  $("tIst").textContent = fmt(smooth);
+  $("tSoll").textContent = fmt(soll);
+  $("tCents").textContent = (c>0?"+":c<0?"−":"") + Math.abs(c).toFixed(0) + " Cent";
+  setNeedle(c);
+
+  const adv = $("tAdvice");
+  let st, txt;
+  if(Math.abs(c) <= 5){ st="ok"; txt = "✓ Passt, die Saite ist gestimmt"; }
+  else if(c < 0){ st="up"; txt = Math.abs(c) > 100 ? "▲ Viel zu tief: deutlich höher stimmen (Saite spannen)" : "▲ Zu tief: höher stimmen (Saite spannen)"; }
+  else { st="down"; txt = c > 100 ? "▼ Viel zu hoch: deutlich tiefer stimmen (Saite lockern)" : "▼ Zu hoch: tiefer stimmen (Saite lockern)"; }
+  adv.dataset.state = st; adv.textContent = txt; tuner.dataset.state = st;
+}
+function setNeedle(c){
+  needleCents = Math.max(-50, Math.min(50, c));
+  $("needle").style.transform = `rotate(${needleCents*0.9}deg)`;
+}
+
+async function startMic(){
+  audio();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    $("tMsg").textContent = "Dieser Browser bietet hier kein Mikrofon an. Öffne die Seite direkt in Safari oder Chrome.";
+    return;
+  }
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+  }catch(e){
+    $("tMsg").textContent = "Kein Zugriff aufs Mikrofon. In der Claude-Vorschau ist das Mikrofon gesperrt. Öffne die Seite direkt in Safari und erlaube das Mikrofon.";
+    showIdle("Mikrofon nicht verfügbar");
+    return;
+  }
+  if(ctx.state !== "running") await ctx.resume();
+  const src = ctx.createMediaStreamSource(micStream);
+  analyser = ctx.createAnalyser(); analyser.fftSize = 4096;
+  tbuf = new Float32Array(analyser.fftSize);
+  src.connect(analyser);
+  micOn = true; $("micBtn").textContent = "Mikrofon stoppen";
+  $("tMsg").textContent = "Tippe eine Saite unten an, um sie fest als Ziel zu wählen. Der Referenzton wird dabei kurz abgespielt.";
+  showIdle("Zupf eine Saite.");
+  requestAnimationFrame(tick);
+}
+function stopMic(){
+  micOn = false;
+  if(micStream) micStream.getTracks().forEach(t=>t.stop());
+  micStream = null; $("micBtn").textContent = "Mikrofon starten";
+  setNeedle(0); showIdle("Starte das Mikrofon und zupf eine Saite.");
+}
+$("micBtn").onclick = ()=> micOn ? stopMic() : startMic();
+</script>
+
+</body>
+</html>
